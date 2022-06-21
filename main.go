@@ -77,6 +77,24 @@ func send_message(params []string) {
 	conn.WriteMessage(websocket.TextMessage, []byte(msg))
 }
 
+func send_file(params []string) {
+	cid, err := strconv.Atoi(params[0])
+	if err != nil {
+		log.Printf("Invalid cid: %s\n", params[0])
+	}
+	conn, ok := connections[cid]
+	if ok == false {
+		log.Printf("[!] No connection with cid = %v\n", cid)
+		return
+	}
+	data, err := os.ReadFile(params[1])
+	if err != nil {
+		log.Printf("Error reading contents of file %s\n", params[1])
+		return
+	}
+	conn.WriteMessage(websocket.TextMessage, data)
+}
+
 func broadcast_message(params []string) {
 	msg := strings.Join(params, " ")
 	for _, conn := range connections {
@@ -100,6 +118,7 @@ func serverInput() {
 	commands := map[string]func([]string){
 		"broadcast": broadcast_message,
 		"send":      send_message,
+		"sendf":     send_file,
 		"clients":   func(params []string) { list_clients() },
 	}
 	for {
